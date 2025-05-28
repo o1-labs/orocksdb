@@ -256,11 +256,6 @@ module Options = struct
   let set_min_write_buffer_number_to_merge =
     create_setter "set_min_write_buffer_number_to_merge" int
 
-  (* extern void rocksdb_options_set_max_write_buffer_number_to_maintain( *)
-  (*     rocksdb_options_t*, int); *)
-  let set_max_write_buffer_number_to_maintain =
-    create_setter "set_max_write_buffer_number_to_maintain" int
-
   (* extern void rocksdb_options_set_max_background_compactions(rocksdb_options_t*, int); *)
   let set_max_background_compactions =
     create_setter "set_max_background_compactions" int
@@ -350,16 +345,6 @@ module Options = struct
   (*     rocksdb_options_t*, unsigned int); *)
   let set_stats_dump_period_sec =
     create_setter "set_stats_dump_period_sec" Views.int_to_uint_t
-
-  (* extern void rocksdb_options_set_advise_random_on_open( *)
-  (*     rocksdb_options_t*, unsigned char); *)
-  let set_advise_random_on_open =
-    create_setter "set_advise_random_on_open" Views.bool_to_uchar
-
-  (* extern void rocksdb_options_set_access_hint_on_compaction_start( *)
-  (*     rocksdb_options_t*, int); *)
-  let set_access_hint_on_compaction_start =
-    create_setter "set_access_hint_on_compaction_start" int
 
   (* extern void rocksdb_options_set_use_adaptive_mutex( *)
   (*     rocksdb_options_t*, unsigned char); *)
