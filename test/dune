@@ -1,0 +1,4 @@
+(test 
+  (name rocks_test)
+  (libraries rocks))
+
