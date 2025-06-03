@@ -13,3 +13,10 @@ In case this library is not sufficient for your needs, then feel free to extend
 it, or to have a look at one of the alternatives:
 https://github.com/ahrefs/ocaml-ahrocksdb and
 https://github.com/chetmurthy/ocaml-rocksdb.
+
+## Setup development environment
+
+```shell
+opam switch create ./ 4.14.0 --no-install
+opam install merlin ocamlformat core.v0.14.1
+```
