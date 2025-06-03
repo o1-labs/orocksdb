@@ -2,3 +2,4 @@
 /aname/
 /*.native
 _opam
+.merlin
