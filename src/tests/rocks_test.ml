@@ -29,4 +29,8 @@ let main () =
   close db
 
 let () =
-  try main () ; Gc.full_major () with exn -> Gc.full_major () ; raise exn
+  let open Alcotest in
+  let test () =
+    try main () ; Gc.full_major () with exn -> Gc.full_major () ; raise exn
+  in
+  run "RocksDB Tests" [ ("RocksDB", [ test_case "Main Test" `Quick test ]) ]

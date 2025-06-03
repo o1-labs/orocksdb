@@ -1,0 +1,3 @@
+(tests
+ (names rocks_test)
+ (libraries alcotest rocks))
