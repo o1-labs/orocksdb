@@ -20,3 +20,12 @@ https://github.com/chetmurthy/ocaml-rocksdb.
 opam switch create ./ 4.14.0 --no-install
 opam install merlin ocamlformat core.v0.14.1
 ```
+
+## Build and run tests
+
+```
+opam install . --with-test --deps-only
+dune build
+dune runtest
+dune fmt --auto-promote # to format the code
+```
