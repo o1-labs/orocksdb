@@ -9,9 +9,10 @@ let f dir =
 
 let () =
   let path =
-      Sys.getenv "CAML_LD_LIBRARY_PATH" |>
-      Option.value_map ~default:[] ~f:(String.split ~on:':') |>
-      List.find_exn ~f in
+    Sys.getenv "CAML_LD_LIBRARY_PATH"
+    |> Option.value_map ~default:[] ~f:(String.split ~on:':')
+    |> List.find_exn ~f
+  in
   let uname_chan = Unix.open_process_in "uname" in
   let l = In_channel.input_line uname_chan in
   C.Flags.write_sexp "flags.sexp"
@@ -21,7 +22,8 @@ let () =
         ; "-lz"
         ; "-lbz2"
         ; "-lc++abi"
-        ; "-lc++" ]
+        ; "-lc++"
+        ]
     | Some "Linux" ->
         [ sprintf "-L%s" path
         ; "-Wl,--whole-archive"
@@ -29,7 +31,8 @@ let () =
         ; "-Wl,--no-whole-archive"
         ; "-lz"
         ; "-lbz2"
-        ; "-lstdc++" ]
+        ; "-lstdc++"
+        ]
     | s ->
         let s' = Option.value ~default:"<none>" s in
         failwith (sprintf "don't know how to link on %s yet" s') )
