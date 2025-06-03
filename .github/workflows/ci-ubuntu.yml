@@ -1,0 +1,57 @@
+name: CI for Ubuntu
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  run_checks:
+    strategy:
+      matrix:
+        ocaml_version: ["4.14"]
+        os: ["ubuntu-latest"]
+        gcc_version: ["11"]
+        rocksdb_stubs_version: ["5.17.2"]
+    runs-on: ${{ matrix.os }}
+    name: Install and run basic tests
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Setup OCaml ${{ matrix.ocaml_version }}
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml_version }}
+          # https://github.com/ocaml/setup-ocaml/issues/211#issuecomment-1058882386
+          # disable-cache: true
+
+      - name: Install GCC ${{ matrix.gcc_version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc-${{ matrix.gcc_version }} g++-${{ matrix.gcc_version }} -y
+
+      - name: Set GCC ${{ matrix.gcc_version }} as default
+        run: |
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ matrix.gcc_version}} 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ matrix.gcc_version}} 100
+          gcc --version
+          g++ --version
+
+      - name: Install rocksdb_stubs version ${{ matrix.rocksdb_stubs_version }}
+        run: |
+          opam repository add --yes --all o1-labs https://github.com/o1-labs/opam-repository.git
+          opam install rocksdb_stubs.${{ matrix.rocksdb_stubs_version }}
+
+      - name: Setup OCaml environment
+        run: |
+          eval $(opam env)
+          opam install merlin ocamlformat core.v0.14.1
+          opam install . --with-test --deps-only
+
+      - name: Build and run tests
+        run: |
+          eval $(opam env)
+          dune build
+          dune runtest
