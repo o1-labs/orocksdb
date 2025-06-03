@@ -21,5 +21,5 @@
   conf-zlib
   (ctypes (>= 0.4.0))
   (ctypes-foreign (>= 0.4.0))
-  rocksdb_stubs
+  (rocksdb_stubs (= 5.17.2))
 ))
