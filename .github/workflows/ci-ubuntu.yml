@@ -12,7 +12,7 @@ jobs:
       matrix:
         ocaml_version: ["4.14"]
         os: ["ubuntu-22.04", "ubuntu-latest"]
-        gcc_version: ["11", "12"]
+        gcc_version: ["11", "12", "13"]
         rocksdb_stubs_version: ["5.17.2"]
     runs-on: ${{ matrix.os }}
     name: Install and run basic tests
@@ -30,6 +30,7 @@ jobs:
       - name: Install GCC ${{ matrix.gcc_version }}
         run: |
           sudo apt-get update
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
           sudo apt-get install gcc-${{ matrix.gcc_version }} g++-${{ matrix.gcc_version }} -y
 
       - name: Set GCC ${{ matrix.gcc_version }} as default
