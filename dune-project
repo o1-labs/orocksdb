@@ -15,6 +15,7 @@
  (synopsis "Binding to RocksDB for OCaml")
  (depends
   dune
+  dune-configurator
   (ocaml (and (>= 4.14) (< 5.0)))
   (alcotest :with-test)
   conf-libbz2
