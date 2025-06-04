@@ -1,5 +1,7 @@
 # Unreleased
 
+# 0.1.1
+
 - Update the repository structure - https://github.com/o1-labs/orocksdb/pull/2
 
 ## CI
