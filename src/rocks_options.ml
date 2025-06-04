@@ -2,119 +2,113 @@ open Ctypes
 open Foreign
 open Rocks_common
 
-module Cache =
-  struct
-    type nonrec t = t
-    let t = t
+module Cache = struct
+  type nonrec t = t
 
-    let get_pointer = get_pointer
+  let t = t
 
-    let create_no_gc =
-      (* extern rocksdb_cache_t* rocksdb_cache_create_lru(size_t capacity); *)
-      foreign
-        "rocksdb_cache_create_lru"
-        (Views.int_to_size_t @-> returning t)
+  let get_pointer = get_pointer
 
-    let destroy =
-      (* extern void rocksdb_cache_destroy(rocksdb_cache_t* cache); *)
-      make_destroy t "rocksdb_cache_destroy"
+  let create_no_gc =
+    (* extern rocksdb_cache_t* rocksdb_cache_create_lru(size_t capacity); *)
+    foreign "rocksdb_cache_create_lru" (Views.int_to_size_t @-> returning t)
 
-    let create capacity =
-      let t = create_no_gc capacity in
-      Gc.finalise destroy t;
-      t
+  let destroy =
+    (* extern void rocksdb_cache_destroy(rocksdb_cache_t* cache); *)
+    make_destroy t "rocksdb_cache_destroy"
 
-    let with_t capacity f =
-      let t = create_no_gc capacity in
-      finalize
-        (fun () -> f t)
-        (fun () -> destroy t)
+  let create capacity =
+    let t = create_no_gc capacity in
+    Gc.finalise destroy t ; t
 
-    let create_setter property_name property_typ =
-      foreign
-        ("rocksdb_cache_" ^ property_name)
-        (t @-> property_typ @-> returning void)
+  let with_t capacity f =
+    let t = create_no_gc capacity in
+    finalize (fun () -> f t) (fun () -> destroy t)
 
-    let set_capacity = create_setter "set_capacity" int
+  let create_setter property_name property_typ =
+    foreign
+      ("rocksdb_cache_" ^ property_name)
+      (t @-> property_typ @-> returning void)
+
+  let set_capacity = create_setter "set_capacity" int
+end
+
+module Snapshot = struct
+  type nonrec t = t
+
+  let t = t
+end
+
+module BlockBasedTableOptions = struct
+  include CreateConstructors (struct
+    let name = "block_based_table_options"
+
+    let constructor = "rocksdb_block_based_options_create"
+
+    let destructor = "rocksdb_block_based_options_destroy"
+
+    let setter_prefix = "rocksdb_block_based_options_"
+  end)
+
+  (* extern void rocksdb_block_based_options_set_block_size( *)
+  (*     rocksdb_block_based_table_options_t* options, size_t block_size); *)
+  let set_block_size = create_setter "set_block_size" Views.int_to_size_t
+
+  (* extern void rocksdb_block_based_options_set_block_size_deviation( *)
+  (*     rocksdb_block_based_table_options_t* options, int block_size_deviation); *)
+  let set_block_size_deviation = create_setter "set_block_size_deviation" int
+
+  (* extern void rocksdb_block_based_options_set_block_restart_interval( *)
+  (*     rocksdb_block_based_table_options_t* options, int block_restart_interval); *)
+  let set_block_restart_interval =
+    create_setter "set_block_restart_interval" int
+
+  (* extern void rocksdb_block_based_options_set_filter_policy( *)
+  (*     rocksdb_block_based_table_options_t* options, *)
+  (*     rocksdb_filterpolicy_t* filter_policy); *)
+  (* let set_filter_policy = *)
+  (*   create_setter "set_filter_policy" TODO *)
+
+  (* extern void rocksdb_block_based_options_set_no_block_cache( *)
+  (*     rocksdb_block_based_table_options_t* options, *)
+  (*     unsigned char no_block_cache); *)
+  let set_no_block_cache =
+    create_setter "set_no_block_cache" Views.bool_to_uchar
+
+  (* extern void rocksdb_block_based_options_set_block_cache( *)
+  (*     rocksdb_block_based_table_options_t* options, rocksdb_cache_t* block_cache); *)
+  let set_block_cache = create_setter "set_block_cache" Cache.t
+
+  (* extern void rocksdb_block_based_options_set_whole_key_filtering( *)
+  (*     rocksdb_block_based_table_options_t*, unsigned char); *)
+  let set_whole_key_filtering =
+    create_setter "set_whole_key_filtering" Views.bool_to_uchar
+
+  (* extern void rocksdb_block_based_options_set_format_version( *)
+  (*     rocksdb_block_based_table_options_t*, int); *)
+  let set_format_version = create_setter "set_format_version" int
+
+  module IndexType = struct
+    type t = int
+
+    let binary_search = 0
+
+    let hash_search = 1
   end
 
-module Snapshot =
-  struct
-    type nonrec t = t
-    let t = t
-  end
+  (* enum { *)
+  (*   rocksdb_block_based_table_index_type_binary_search = 0, *)
+  (*   rocksdb_block_based_table_index_type_hash_search = 1, *)
+  (* }; *)
+  (* extern void rocksdb_block_based_options_set_index_type( *)
+  (*     rocksdb_block_based_table_options_t*, int); // uses one of the above enums *)
+  let set_index_type = create_setter "set_index_type" int
 
-module BlockBasedTableOptions =
-  struct
-    include CreateConstructors(struct
-                                  let name = "block_based_table_options"
-                                  let constructor = "rocksdb_block_based_options_create"
-                                  let destructor  = "rocksdb_block_based_options_destroy"
-                                  let setter_prefix = "rocksdb_block_based_options_"
-                                end)
-
-    (* extern void rocksdb_block_based_options_set_block_size( *)
-    (*     rocksdb_block_based_table_options_t* options, size_t block_size); *)
-    let set_block_size =
-      create_setter "set_block_size" Views.int_to_size_t
-
-    (* extern void rocksdb_block_based_options_set_block_size_deviation( *)
-    (*     rocksdb_block_based_table_options_t* options, int block_size_deviation); *)
-    let set_block_size_deviation =
-      create_setter "set_block_size_deviation" int
-
-    (* extern void rocksdb_block_based_options_set_block_restart_interval( *)
-    (*     rocksdb_block_based_table_options_t* options, int block_restart_interval); *)
-    let set_block_restart_interval =
-      create_setter "set_block_restart_interval" int
-
-    (* extern void rocksdb_block_based_options_set_filter_policy( *)
-    (*     rocksdb_block_based_table_options_t* options, *)
-    (*     rocksdb_filterpolicy_t* filter_policy); *)
-    (* let set_filter_policy = *)
-    (*   create_setter "set_filter_policy" TODO *)
-
-    (* extern void rocksdb_block_based_options_set_no_block_cache( *)
-    (*     rocksdb_block_based_table_options_t* options, *)
-    (*     unsigned char no_block_cache); *)
-    let set_no_block_cache =
-      create_setter "set_no_block_cache" Views.bool_to_uchar
-
-    (* extern void rocksdb_block_based_options_set_block_cache( *)
-    (*     rocksdb_block_based_table_options_t* options, rocksdb_cache_t* block_cache); *)
-    let set_block_cache =
-      create_setter "set_block_cache" Cache.t
-
-    (* extern void rocksdb_block_based_options_set_whole_key_filtering( *)
-    (*     rocksdb_block_based_table_options_t*, unsigned char); *)
-    let set_whole_key_filtering =
-      create_setter "set_whole_key_filtering" Views.bool_to_uchar
-
-    (* extern void rocksdb_block_based_options_set_format_version( *)
-    (*     rocksdb_block_based_table_options_t*, int); *)
-    let set_format_version =
-      create_setter "set_format_version" int
-
-    module IndexType =
-      struct
-        type t = int
-        let binary_search = 0
-        let hash_search = 1
-      end
-    (* enum { *)
-    (*   rocksdb_block_based_table_index_type_binary_search = 0, *)
-    (*   rocksdb_block_based_table_index_type_hash_search = 1, *)
-    (* }; *)
-    (* extern void rocksdb_block_based_options_set_index_type( *)
-    (*     rocksdb_block_based_table_options_t*, int); // uses one of the above enums *)
-    let set_index_type =
-      create_setter "set_index_type" int
-
-    (* extern void rocksdb_block_based_options_set_cache_index_and_filter_blocks( *)
-    (*     rocksdb_block_based_table_options_t*, unsigned char); *)
-    let set_cache_index_and_filter_blocks =
-      create_setter "set_cache_index_and_filter_blocks" Views.bool_to_uchar
-  end
+  (* extern void rocksdb_block_based_options_set_cache_index_and_filter_blocks( *)
+  (*     rocksdb_block_based_table_options_t*, unsigned char); *)
+  let set_cache_index_and_filter_blocks =
+    create_setter "set_cache_index_and_filter_blocks" Views.bool_to_uchar
+end
 
 module Options = struct
   module SliceTransform = struct
@@ -123,11 +117,15 @@ module Options = struct
     let t = Rocks_common.t
 
     module Noop = struct
-      include CreateConstructors(struct
+      include CreateConstructors (struct
         let super_name = "slicetransform"
+
         let name = "noop"
+
         let constructor = "rocksdb_" ^ super_name ^ "_create_" ^ name
-        let destructor  = "rocksdb_" ^ super_name ^ "_destroy"
+
+        let destructor = "rocksdb_" ^ super_name ^ "_destroy"
+
         let setter_prefix = "rocksdb_" ^ super_name ^ "_" ^ name ^ "_"
       end)
     end
@@ -135,7 +133,10 @@ module Options = struct
 
   (* extern rocksdb_options_t* rocksdb_options_create(); *)
   (* extern void rocksdb_options_destroy(rocksdb_options_t*\); *)
-  module C = CreateConstructors_(struct let name = "options" end)
+  module C = CreateConstructors_ (struct
+    let name = "options"
+  end)
+
   include C
 
   (* extern void rocksdb_options_increase_parallelism( *)
@@ -180,7 +181,8 @@ module Options = struct
 
   (* extern void rocksdb_options_set_create_if_missing( *)
   (*     rocksdb_options_t*, unsigned char); *)
-  let set_create_if_missing = create_setter "set_create_if_missing" Views.bool_to_uchar
+  let set_create_if_missing =
+    create_setter "set_create_if_missing" Views.bool_to_uchar
 
   (* extern void rocksdb_options_set_create_missing_column_families( *)
   (*     rocksdb_options_t*, unsigned char); *)
@@ -206,8 +208,7 @@ module Options = struct
     create_setter "set_write_buffer_size" Views.int_to_size_t
 
   (* extern void rocksdb_options_set_max_open_files(rocksdb_options_t*, int); *)
-  let set_max_open_files =
-    create_setter "set_max_open_files" int
+  let set_max_open_files = create_setter "set_max_open_files" int
 
   (* extern void rocksdb_options_set_max_total_wal_size(rocksdb_options_t* opt, uint64_t n); *)
   let set_max_total_wal_size =
@@ -303,8 +304,7 @@ module Options = struct
 
   (* extern void rocksdb_options_set_use_fsync( *)
   (*     rocksdb_options_t*, int); *)
-  let set_use_fsync =
-    create_setter "set_use_fsync" Views.bool_to_int
+  let set_use_fsync = create_setter "set_use_fsync" Views.bool_to_int
 
   (* extern void rocksdb_options_set_db_log_dir( *)
   (*     rocksdb_options_t*, const char*\); *)
@@ -383,12 +383,12 @@ module Options = struct
   (* extern void rocksdb_options_set_delete_obsolete_files_period_micros( *)
   (*     rocksdb_options_t*, uint64_t); *)
   let set_delete_obsolete_files_period_micros =
-    create_setter "set_delete_obsolete_files_period_micros" Views.int_to_uint64_t
+    create_setter "set_delete_obsolete_files_period_micros"
+      Views.int_to_uint64_t
 
   (* extern void rocksdb_options_set_max_compaction_bytes(
     rocksdb_options_t*, uint64_t); *)
-  let set_max_compaction_bytes =
-    create_setter "set_max_compaction_bytes" int
+  let set_max_compaction_bytes = create_setter "set_max_compaction_bytes" int
 
   (* extern void rocksdb_options_prepare_for_bulk_load(rocksdb_options_t*\); *)
   (* extern void rocksdb_options_set_memtable_vector_rep(rocksdb_options_t*\); *)
@@ -397,8 +397,7 @@ module Options = struct
   (* extern void rocksdb_options_set_plain_table_factory(rocksdb_options_t*, uint32_t, int, double, size_t); *)
 
   (* extern void rocksdb_options_set_min_level_to_compress(rocksdb_options_t* opt, int level); *)
-  let set_min_level_to_compress =
-    create_setter "set_min_level_to_compress" int
+  let set_min_level_to_compress = create_setter "set_min_level_to_compress" int
 
   (* extern void rocksdb_options_set_max_successive_merges( *)
   (*     rocksdb_options_t*, size_t); *)
@@ -447,35 +446,51 @@ module Options = struct
 end
 
 module WriteOptions = struct
-  module C = CreateConstructors_(struct let name = "writeoptions" end)
+  module C = CreateConstructors_ (struct
+    let name = "writeoptions"
+  end)
+
   include C
 
   let set_disable_WAL = create_setter "disable_WAL" Views.bool_to_int
+
   let set_sync = create_setter "set_sync" Views.bool_to_uchar
 end
 
 module ReadOptions = struct
-  module C = CreateConstructors_(struct let name = "readoptions" end)
+  module C = CreateConstructors_ (struct
+    let name = "readoptions"
+  end)
+
   include C
 
   let set_snapshot = create_setter "set_snapshot" Snapshot.t
 end
 
 module FlushOptions = struct
-  module C = CreateConstructors_(struct let name = "flushoptions" end)
+  module C = CreateConstructors_ (struct
+    let name = "flushoptions"
+  end)
+
   include C
 
   let set_wait = create_setter "set_wait" Views.bool_to_uchar
 end
 
 module TransactionOptions = struct
-  module C = CreateConstructors_(struct let name = "transaction_options" end)
+  module C = CreateConstructors_ (struct
+    let name = "transaction_options"
+  end)
+
   include C
 
   let set_set_snapshot = create_setter "set_set_snapshot" Views.bool_to_uchar
 end
 
 module TransactionDbOptions = struct
-  module C = CreateConstructors_(struct let name = "transactiondb_options" end)
+  module C = CreateConstructors_ (struct
+    let name = "transactiondb_options"
+  end)
+
   include C
 end
