@@ -15,7 +15,7 @@
 (executable
  (name rocks_linker_flags_gen)
  (modules rocks_linker_flags_gen)
- (libraries dune.configurator core))
+ (libraries dune.configurator))
 
 ;; todo: fails with sandbox, since the generated flags are opaque to dune
 

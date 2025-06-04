@@ -18,7 +18,7 @@ https://github.com/chetmurthy/ocaml-rocksdb.
 
 ```shell
 opam switch create ./ 4.14.0 --no-install
-opam install merlin ocamlformat core.v0.14.1
+opam install merlin ocamlformat
 ```
 
 ## Build and run tests
